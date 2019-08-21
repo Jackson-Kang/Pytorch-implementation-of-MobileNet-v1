@@ -106,3 +106,7 @@ venv.bak/
 # trained model and datasets
 logs/
 datasets/
+
+# vim temp file
+*.swp
+
