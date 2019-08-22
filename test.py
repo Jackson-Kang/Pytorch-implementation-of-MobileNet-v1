@@ -19,7 +19,10 @@ def test(model_name):
 	correct = 0
 
 	print("\nLoad saved model...")
-	model.load_state_dict(torch.load(cfg.log_path + model_name + "_mnist.pt"))
+
+	if not cfg.pretrained:
+		model.load_state_dict(torch.load(cfg.log_path + model_name + "_cifar10.pt"))
+
 	model.eval()
 	print("Done..!")
 
@@ -27,6 +30,11 @@ def test(model_name):
 	with torch.no_grad():
 		for data, target in tqdm(test_loader):
 			data, target = data.to(cfg.device), target.to(cfg.device)
+			
+			if cfg.convert_to_RGB:
+				batch_size, channel, width, height = data.size()
+				data = data.view(batch_size, channel, width, height).expand(batch_size, cfg.converted_channel, width, height)
+
 			output = model(data)
 			test_loss += f.nll_loss(output, target, reduction='sum').item() # sum up batch loss
 			pred = output.argmax(dim=1, keepdim=True) # get the index of the max log-probability
@@ -34,7 +42,7 @@ def test(model_name):
 
 	test_loss /= len(test_loader.dataset)
 
-	print('\tTest set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n\n'.format(
+	print('\tTest set: Average loss: {:.4f}, Accuracy: {}/{} ({:.2f}%)\n\n'.format(
         		test_loss, correct, len(test_loader.dataset),
         		100. * correct / len(test_loader.dataset))
 	)
@@ -43,4 +51,5 @@ def test(model_name):
 
 if __name__ == "__main__":
 	test(model_name="CNN")
-
+	#test(model_name = "AlexNet")
+	#test(model_name = "SqueezeNet")

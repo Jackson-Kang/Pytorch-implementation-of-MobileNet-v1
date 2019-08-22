@@ -17,17 +17,24 @@ class Conv2dNet(nn.Module):
 		"""
 
 		super(Conv2dNet, self).__init__()
-		self.conv1 = nn.Conv2d(1, 20, cfg.kernel_size, cfg.stride)
-		self.conv2 = nn.Conv2d(20, 50, cfg.kernel_size, cfg.stride)
-		self.fc1 = nn.Linear(4 * 4 * 50, 500)
+
+		if cfg.convert_to_RGB:
+			input_channel = cfg.converted_channel
+		else:
+			input_channel = cfg.input_data_channel
+
+		self.conv1 = nn.Conv2d(input_channel, 20, cfg.cnn_kernel_size, cfg.cnn_stride)
+		self.conv2 = nn.Conv2d(20, 50, cfg.cnn_kernel_size, cfg.cnn_stride)
+
+		self.fc1 = nn.Linear(6 * 6 * 50, 500)
 		self.fc2 = nn.Linear(500, cfg.class_number)
 
 	def forward(self, x):
 		x = f.relu(self.conv1(x))
-		x = f.max_pool2d(x, cfg.max_pool[0], [1])
+		x = f.max_pool2d(x, cfg.cnn_max_pool[0], cfg.cnn_max_pool[1])
 		x = f.relu(self.conv2(x))
-		x = f.max_pool2d(x, cfg.max_pool[0],cfg.max_pool[1])
-		x = x.view(-1, 4*4*50)
+		x = f.max_pool2d(x, cfg.cnn_max_pool[0], cfg.cnn_max_pool[1])
+		x = x.view(-1, 6 * 6 * 50)
 		x = f.relu(self.fc1(x))
 		x = self.fc2(x)
 

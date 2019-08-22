@@ -19,18 +19,29 @@ def __downloadData(train):
 			kwargs = {'num_workers': 1, 'pin_memory': True} if cfg.use_cuda else {}
 
 			if train:
+
 				train_loader = torch.utils.data.DataLoader(
-					datasets.MNIST(cfg.train_path, train=True, download=True,
-						transform=transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.1307,), (0.3081,))])
+					datasets.CIFAR10(cfg.train_path, train=True, download=True,
+						transform=transforms.Compose([
+							transforms.Resize(256),
+							transforms.RandomCrop(224),
+							transforms.RandomHorizontalFlip(),
+							transforms.ToTensor(),
+							transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2470, 0.2435, 0.2616))
+						])
 					),batch_size=cfg.batch_size, shuffle=True, **kwargs)
 				return train_loader			
 
 			else:
 				test_loader = torch.utils.data.DataLoader(
-					datasets.MNIST(cfg.test_path, train=False, download=True, 
-						transform=transforms.Compose([transforms.ToTensor(),transforms.Normalize((0.1307,), (0.3081,))])
+					datasets.CIFAR10(cfg.test_path, train=False, download=True, 
+						transform=transforms.Compose([
+							transforms.Resize(224),
+							transforms.ToTensor(),
+							transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2470, 0.2435, 0.2616))
+						])
 					), batch_size=cfg.test_batch_size, shuffle=True, **kwargs)
-
+				print(test_loader)	
 				return test_loader
 
 	except OSError as e:
