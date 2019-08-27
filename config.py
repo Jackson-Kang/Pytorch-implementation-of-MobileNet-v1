@@ -18,13 +18,15 @@ class_number = 10
 cpu_seed = 1514780611
 gpu_seed = 7053313890570024
 
-lr = 0.001
+lr = 0.01
+lr_decaying_step = 7
+lr_decaying_value = 0.1
 momentum = 0.9
-epochs = 100
 
-model_list1 = ["AlexNet"]
-model_list2 = ["SqueezeNet"]
-model_list3 = ["MobileNet"]
+epochs = 1
+
+model_list = ["AlexNet", "SqueezeNet", "MobileNet"]
+
 
 # data configurations
 
@@ -57,4 +59,5 @@ log_path = "./logs/"
 # save configurations
 
 save_model = True
+save_epoch = 1
 time_record = True

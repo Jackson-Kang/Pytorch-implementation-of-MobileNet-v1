@@ -1,6 +1,7 @@
 from tqdm import tqdm
 
 import torch
+import torch.nn as nn
 import torch.nn.functional as f
 
 from utils import getModel
@@ -18,15 +19,16 @@ def test(model_name):
 	test_loss = 0
 	correct = 0
 
-	print("\nLoad saved model...")
+	print("\nLoad saved model [", model_name, "]...")
 
 	if not cfg.pretrained:
-		model.load_state_dict(torch.load(cfg.log_path + model_name + "_cifar10.pt"))
-
+		model.load_state_dict(torch.load(cfg.log_path + model_name + "_cifar10.pt")['model_state_dict'])
 	model.eval()
 	print("Done..!")
 
-	print("\nStart to test...")
+	criterion = nn.CrossEntropyLoss()
+
+	print("\nStart to test " , model_name, " ...")
 	with torch.no_grad():
 		for data, target in tqdm(test_loader):
 			data, target = data.to(cfg.device), target.to(cfg.device)
@@ -36,7 +38,7 @@ def test(model_name):
 				data = data.view(batch_size, channel, width, height).expand(batch_size, cfg.converted_channel, width, height)
 
 			output = model(data)
-			test_loss += f.nll_loss(output, target, reduction='sum').item() # sum up batch loss
+			test_loss += criterion(output, target).item() # sum up batch loss
 			pred = output.argmax(dim=1, keepdim=True) # get the index of the max log-probability
 			correct += pred.eq(target.view_as(pred)).sum().item()
 
@@ -50,6 +52,6 @@ def test(model_name):
 
 
 if __name__ == "__main__":
-	test(model_name="CNN")
-	#test(model_name = "AlexNet")
-	#test(model_name = "SqueezeNet")
+
+	for model_name in cfg.model_list:
+		test(model_name = model_name)

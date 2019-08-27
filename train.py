@@ -21,13 +21,27 @@ def train(model_name):
 
 	criterion = nn.CrossEntropyLoss()
 	optimizer = optim.SGD(model.parameters(), lr=cfg.lr, momentum=cfg.momentum)
+	scheduler = optim.lr_scheduler.StepLR(optimizer, cfg.lr_decaying_step, gamma = cfg.lr_decaying_value)
+	saved_model_path = cfg.log_path + model_name + "_cifar10.pt"
+
+	if os.path.isfile(saved_model_path):
+		# load saved checkpoint
+		
+		checkpoint = torch.load(saved_model_path)
+		model.load_state_dict(checkpoint['model_state_dict'])
+		optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+		start_epoch = checkpoint['epoch']
+		loss = checkpoint['loss']
+	else:
+		start_epoch = 1
 
 
 	model.train()
 
+
 	print("\nStart training ", model_name, "...")
 
-	for epoch in range(1, cfg.epochs + 1):
+	for epoch in range(start_epoch, cfg.epochs + 1):
 		for batch_idx, (data, target) in enumerate(tqdm(train_loader)):
 			data, target = data.to(cfg.device), target.to(cfg.device)
 
@@ -42,21 +56,23 @@ def train(model_name):
 
 			loss.backward()
 			optimizer.step()
+		
+		scheduler.step()
+
+		if cfg.save_model and (epoch % cfg.save_epoch == 0):
+			if not(os.path.isdir(cfg.log_path)):
+				os.makedirs(os.path.join(cfg.log_path))
+			
+			torch.save({
+					'epoch':epoch + 1,
+					'model_state_dict': model.state_dict(),
+					'optimizer_state_dict': optimizer.state_dict(),
+					'loss': loss
+				}, saved_model_path)
+
 
 
 		print('\tTrain Epoch: {} / {} \t Loss: {:.6f}\n'.format(epoch, cfg.epochs, loss.item()))
-	print("Done!\n\n")
-
-
-
-	# save model
-	print("Saving model...!")
-
-	if cfg.save_model:		
-		if not(os.path.isdir(cfg.log_path)):
-			os.makedirs(os.path.join(cfg.log_path))
-		torch.save(model.state_dict(), cfg.log_path + model_name + "_cifar10.pt")
-
 	print("Done!\n\n")
 
 
@@ -72,6 +88,6 @@ if __name__ == "__main__":
 		# use CPU
 		torch.manual_seed(cfg.cpu_seed)
 
-	for model_name in cfg.model_list2:	
+	for model_name in cfg.model_list:	
 		train(model_name = model_name)	
 
